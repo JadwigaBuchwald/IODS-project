@@ -1,4 +1,14 @@
 
-# About the project
+# Introduction to Open Data Science, 2017: chapter1
+(*chapter1.Rmd stuff shows up here*)
 
-*Write a short description about the course and add a link to your github repository here. This is an R markdown (.Rmd) file so you can use R markdown syntax. See the 'Useful links' page in the mooc area (chapter 1) for instructions.*
+##Short description of the course
+This course is a Massive Open Online Course (**MOOC**) taught by *Kimmo Vehkalahti, Tuomo Nieminen, Emma Kämäräinen* and *Petteri Mäntymaa*. This course introduces us to the softwares: `R`, `Rstudio`, `Rmarkdown`, `GitHub`, `Git`/`Git Desktop`. This is what it says on the course web page about the course:
+
+>Our era of data - larger than ever and complex like chaos - requires several skills from statisticians and other data scientists. We must discover the patterns hidden behind numbers in matrices and arrays. We are not afraid of coding, recoding, programming, or modelling. We want to visualize, analyze, interpret, understand, and communicate. These are the core themes of Open Data Science  (Open Data - Open Science - Data Science). And this course is THE course for learning these skills.  
+*The above text modified from:* https://www.crcpress.com/Correspondence-Analysis-in-Practice-Third-Edition/Greenacre/p/book/9781498731775?tab=rev
+
+
+##Link to my Github repository
+
+https://github.com/JadwigaBuchwald/IODS-project
