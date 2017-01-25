@@ -1,8 +1,9 @@
 ---
 title: "IODS course project"
+author: "Jadwiga Buchwald"
 output:
   html_document:
-    theme: cosmo
+    theme: united
     toc: true
     toc_depth: 2
     fig_caption: true
@@ -14,6 +15,7 @@ output:
 ***
   
 ```{r child = "chapter1.Rmd"}
+#"default", "cerulean"#blueish, "journal"#black and red, quite distinct, "flatly"#turquoise, "readable"#round, "spacelab", "united"#red, "cosmo"#blue and no cursive, "lumen", "paper", "sandstone"#light green, "simplex"#similar to united, and "yeti"
 ```
   
 ***
