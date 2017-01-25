@@ -1,0 +1,28 @@
+
+## Some more information about the course
+
+These are some of the statistical methods to be gone through during the course:
+
+1. **Regression and model validation**
+    + Simple regression
+    + Multiple regression
+    + Regression diagnostics  
+    
+2.  **Logistic regression**
+    + Logistic regression
+    + Cross validation: Training set and test set
+
+3. **Clustering and classification**
+    + K-means clustering (KMC)
+    + Discriminant analysis (DA)
+    
+4.  **Dimensionality reduction techniques**
+    + Principal component analysis (PCA)
+    + Correspondence analysis (CA, MCA)
+
+5. **Multivariate statistical modelling**
+    + Confirmatory factor analysis (CFA)
+    + Structural equation models (SEM)
+
+## Link to my course diary
+https://jadwigabuchwald.github.io/IODS-project/
