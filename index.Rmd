@@ -16,7 +16,7 @@ output:
   
 ```{r child = "chapter1.Rmd"}
 #Notes on theme options:
-#"default", "cerulean"#blueish, "journal"#black and red, quite distinct, "flatly"#turquoise, "readable"#round, "spacelab", "united"#red, "cosmo"#blue and no cursive, "lumen", "paper", "sandstone"#light green, "simplex"#similar to united, and "yeti"
+#"default", "cerulean"#blueish, "journal"#black and red, quite distinct, "flatly"#turquoise, "readable"#round, "spacelab", "united"#red, "cosmo"#blue and no cursive/ the default on this course , "lumen", "paper", "sandstone"#light green, "simplex"#similar to united, and "yeti"
 ```
   
 ***
