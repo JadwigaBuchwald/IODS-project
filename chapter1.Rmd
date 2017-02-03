@@ -1,5 +1,5 @@
 
-# Introduction to Open Data Science, 2017: chapter1
+# Chapter 1: Introduction to Open Data Science, 2017
 (*chapter1.Rmd stuff shows up here*)
 
 ##Short description of the course

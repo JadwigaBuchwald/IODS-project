@@ -1,7 +1,65 @@
-# Insert chapter 2 title here
+# Chapter 2: Data wrangling and linear regression
 
 *Describe the work you have done this week and summarize your learning.*
 
-- Describe your work and results clearly. 
-- Assume the reader has an introductory course level understanding of writing and reading R code as well as statistical methods
-- Assume the reader has no previous knowledge of your data or the more advanced methods you are using  
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+setwd("C:/HY-Data/JADWIGAB/PhD_FIMM/NotesOutsideTheOffice/Courses/OpenData2017/For_IODS/IODS-project")
+```
+
+Reading in the data `learning2014` that we wrangled from the data described [here](http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS2-meta.txt). The data is from a Finnish statistics course based on an international survey of approaches to learning.
+
+```{r analysis}
+learning2014<-read.table("./data/learning2014.txt", sep="\t", header=T, dec=".")
+dim(learning2014)
+str(learning2014)
+
+###Data descriptives
+
+# accessig the GGally and ggplot2 libraries
+library(GGally)
+library(ggplot2)
+
+# Drawing pairwise plots of all columnswith ggpairs(), by sex
+p <- ggpairs(learning2014, mapping = aes(col=gender,alpha=0.3), lower = list(combo = wrap("facethist", bins = 20)))
+p
+
+summary(learning2014)
+
+```
+
+Students who did not attend the statistics course exam have been excluded from the data. The data contains 166 participants with the female-male ratio of 2:1 and the age range of 17--55. The four variables `attitude`, `deep`,`stra` and `surf` have been formed on the scale 1--5, and are somewhat normally distributed with no apparent gender differences based on visual inspection. Between these four variables there is no remarkable correlation except for `surf` and `deep` in the case of men (cor = -0.622). On the contrary, for women there is no correlation between these two variables (cor = -0.087). The `points` variable depicting the points from the course exams gets values from 7 to 33. It is moderately correlated with `attitude` (cor= 0.4 for females, cor = 0.5 for men) but not with the other variables. 
+
+```{r model}
+m <- lm(points ~ attitude + gender + age, data = learning2014)
+
+# print out a summary of the model
+summary(m)
+
+```
+We test wether the coefficients of `attitude`, `gender` and `age` differ from zero based on the t-test. `Attitude` has a statistically significant association with `points`, whereas `gender` and `age` do not. We test modelling with variables that are in a stronger correlation with `points`:
+```{r model2}
+m <- lm(points ~ attitude + stra + surf, data = learning2014) #testing with variables that are in stronger correlation with attitude
+
+# print out a summary of the model
+summary(m)
+
+```
+
+Only `attitude` is statistically significantly associated with `points`, so we take the unnessessary variables away from the model.
+
+```{r finalmodel}
+m <- lm(points ~ attitude, data = learning2014)  #excluding the non stat sig. variables from the model
+# print out a summary of the model
+summary(m)
+```
+
+Based on our final model with every unit increase for attitude point are increased by 3 units on average. The Multiple R-squared of the model is 0.19, meaning that 19% of the variance of `points` is explained by this model, i.e. `attitude`.
+
+```{r validity}
+plot(m,which=c(1,2,5))
+```
+
+The assumption of the linear regression model are that the dependent variable is normally distributed and that the residuals are normally distributed, and independent of each other as well as of the values of the variables in the model. Based on the pairwise plot displayed in the beginning of this exercise (Chapt. 2) and the distribution shown in the very right bottom corner of it, `points` is somewhat normally distributed. The assumptions related to the residuals of the model also seem to hold quite nicely: they seem to be randomly distributed around zero independent of the fitted values (Residuals vs Fitted plot), normally distributed (Quantile-quantile plot) and no specific datapoints e.g. outliers are having too much of an influence on the model as the leverage is very small (max=0.05 based on Residuals vs. Leverage). 
+
