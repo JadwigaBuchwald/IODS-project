@@ -1,16 +1,18 @@
 # Chapter 2: Data wrangling and linear regression
 
-*Describe the work you have done this week and summarize your learning.*
+*Key words: pairwise plots, assumptions of a linear model*
 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 setwd("C:/HY-Data/JADWIGAB/PhD_FIMM/NotesOutsideTheOffice/Courses/OpenData2017/For_IODS/IODS-project")
+library(GGally)
+library(ggplot2)
 ```
 
 Reading in the data `learning2014` that we wrangled from the data described [here](http://www.helsinki.fi/~kvehkala/JYTmooc/JYTOPKYS2-meta.txt). The data is from a Finnish statistics course based on an international survey of approaches to learning.
 
-```{r analysis}
+```{r analysis, fig.cap="*Figure 1:Pairwise plot of all variables by sex*", fig.width=10.5, fig.height=7.5}
 learning2014<-read.table("./data/learning2014.txt", sep="\t", header=T, dec=".")
 dim(learning2014)
 str(learning2014)
@@ -22,10 +24,13 @@ library(GGally)
 library(ggplot2)
 
 # Drawing pairwise plots of all columnswith ggpairs(), by sex
-p <- ggpairs(learning2014, mapping = aes(col=gender,alpha=0.3), lower = list(combo = wrap("facethist", bins = 20)))
+p <- ggpairs(learning2014, mapping = aes(col=gender,alpha=0.3), lower = list(combo = wrap("facethist", bins = 20))) +
+  ggtitle("All variables against each other") +
+  theme(plot.title = element_text(hjust = 0.5,size=20,face='bold'))
 p
 
 summary(learning2014)
+
 
 ```
 

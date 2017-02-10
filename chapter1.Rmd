@@ -1,6 +1,6 @@
 
 # Chapter 1: Introduction to Open Data Science, 2017
-(*chapter1.Rmd stuff shows up here*)
+*Key words: Rmarkdown (index.Rmd and its child .Rmd files), Github (forking, pushing), R (ggplot2, dplyr)*
 
 ##Short description of the course
 This course is a Massive Open Online Course (**MOOC**) taught by *Kimmo Vehkalahti, Tuomo Nieminen, Emma Kämäräinen* and *Petteri Mäntymaa*. This course introduces us to the softwares: `R`, `Rstudio`, `Rmarkdown`, `GitHub`, `Git`/`Git Desktop`. This is what it says on the course web page about the course:

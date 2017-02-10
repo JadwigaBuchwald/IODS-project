@@ -1,0 +1,201 @@
+# Chapter 3: Joining data and Logistic regression
+
+*Key words: merging data, creating variables within a for loop, logistic regression, cross validation with binary predictions (training and test sets)*
+
+
+Reading in the data `alc` that we wrangled from the data described [here](https://archive.ics.uci.edu/ml/datasets/STUDENT+ALCOHOL+CONSUMPTION). The data is related to secondary school student alcohol comsumption in Portugal, based on two identical questionnaires: one related to a mathematics class and the other to a portuguese class. 
+
+```{r data3}
+alc<-read.table("./data/alc.txt", sep="\t", header=T, dec=".")
+names(alc)
+```
+
+### High/ low alcohol consumption
+To investigate factors associated with high/ low alcohol consumption I chose the following four variables: 
+
+1. **sex** (binary: 'F' - female or 'M' - male)
+2. **address** (binary: 'U' - urban or 'R' - rural) 
+3. **weekly studytime** (numeric: 1 - <2 hours, 2 - 2 to 5 hours, 3 - 5 to 10 hours, or 4 - >10 hours)
+4. **mother's job** (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other') 
+
+I chose these variables as a wanted to have a mixture of binary, ordinal and categorical variables and I felt like these variables might well be associated with alcohol use. 
+
+####Preliminary Hypotheses
+
+My hypothesis (based on previous knowledge and intuition) is that men will be more prone to high consumption than women, students from rural areas will be more prone to high consumption, study time will be negatively correlated (i.e. the more you study the more likely you are to be a low consumer of alcohol), and that there will not be great differences between students with mother's working in different job categories. The minor differences for this last variable might be such that those with mother's working for civil services or belonging to category "other" will be more likely to be high consumers of alcohol than those with mothers working as teachers, in the health care or at home.
+
+####Variable distributions and general assessment of variable relations with alcohol consumption
+
+Based on the below summary statistics and the barplots of the individual variables seen on the diagonal of the pairwise plot(Figure 2), luckily the magority of the students do not fall under the category high consumers of alcohol. High consumers of alcohol only constitute 30% of the data. The sex ratio is almost 1:1, with females taking the lead. Only less than 1/4 of the students live in the rural areas as opposed to the urban areas. The category "Other" is the most popular answer for mother's job, services being the second most common and health the least. Studytime per week has been categorized into 4 ordinal groups the two lowest categories getting most of the values. 
+
+Paying attention to the blue and red colours representing high and low consumption of alcohol respectively in the Figure 2, we note from the diagonal plots that address, sex and studytime, seem to be associated with consumption status. Based on the boxplots (better boxplots lower down, Figure 3) studytime seems to be clearly associated with alcohol consumption: High consumers spend less time studying per week than non-high users. This pattern can be seen irrespective of address and mainly mother's job. Nevertheless, for men this pattern does not apply as they seem to study less than women as a whole, irrespective of their alcohol consumption. 
+
+These associations are in line with my original hypotheses.
+
+```{r analysis3, warning=FALSE,message=FALSE, fig.cap="*Figure 2:Pairwise plot of all variables by alcohol use (blue=T, red=F), NOTE: the axis tick labels stated in the brackets are in the correct order at the top of the graph, but not at the right of the graph!*", fig.width=10.5, fig.height=7.5}
+
+###Relationship between high/low alcohol consumption and 4 variables
+##Distributions of variables and visual inspection of associations
+
+summary(alc[,c("high_use","sex","address","Mjob","studytime")])
+percent_highalc<-114/382; percent_highalc
+str(alc[,c("high_use","sex","address","Mjob","studytime")])
+# accessig the GGally and ggplot2 libraries
+library(GGally)
+library(ggplot2)
+
+# Drawing pairwise plots of the variables to be looked at
+
+alc$high_usef<-as.factor(ifelse(alc$high_use==T, "high", "low"))
+ggpairs(alc, columns=c("high_usef","address","sex","Mjob","studytime"), diag=list(continuous="bar", discrete="bar"), lower=list(continuous="blank", discrete="blank", combo="blank"), axisLabels = "show", columnLabels =c("high_use (T / F)","address (R / U)","sex (F / M)","Mjob (Ho,He,O,S,T)","studytime") , mapping = aes(col=high_use,alpha=0.3)) #sadly I couldn't find a way to get the axis tick labels nicely visible  :(
+
+```
+
+####More scrutinous visual assessments and crosstabulations of possible associations 
+
+Below more clear plots of the boxplots that were already presented in the pairwise plot matrix and that I already commented. 
+
+#####Boxplots
+
+
+```{r boxplots3, warning=FALSE,message=FALSE, fig.cap="*Figure 3:Box plots of studytime by alcohol use and the variables: address, sex and Mjob*", fig.width=10.5, fig.height=7.5,fig.show='hold'}
+
+###Boxplots
+#Studytime
+g1<-ggplot(data=alc, aes(x=high_use, y =studytime, col=address))
+g1+geom_boxplot() + ylab("studytime") #studytime within address groups by drinking group 
+
+g1<-ggplot(data=alc, aes(x=high_use, y =studytime, col=sex))
+g1+geom_boxplot() + ylab("studytime") #studytime within sex groups by drinking group 
+
+
+qplot(data=alc, x=Mjob, y=studytime, geom="boxplot", fill=high_use) #study time by drinking group within Mjob categories 
+
+```
+
+
+#####Address: Rural/Urban
+
+For fun, taking rural vs urban address into closer inspection. In my oppinion when comparing the two different ways of drawing the barplots, the first plot which corresponds to the second crosstabulation is more useful. Based on them, we note that for rural inhabitants there is a larger proportion of high drinkers than for urban inhabitants. The Second plot, corresponding to the first cross tabulation is less interesting as the data contains so many more students from urban areas as opposed to rural areas: for both the low consumers of alcohol, as well as for the high consumers of alcohol, the majority live in urban areas. Looking at the first cross tabulation closely we can also from this perspective note that the proportion of urban inhabitants is higher for low consumers than high consumers. This is all in line with my hypothesis of people living in rural areas consuming more alcohol than those living in urban areas.
+
+
+```{r barplots3, warning=FALSE,message=FALSE, fig.cap="*Figure 4:Bar plots of address and alcohol consumption*", fig.width=10.5, fig.height=7.5, fig.show='hold', results='hold'}
+
+###Relationship between high/low alcohol consumption and 4 variables
+##Distributions of variables and visual inspection of associations
+
+##Barplots
+#address
+g1<-ggplot(data=alc, aes(x=high_use,fill=address))
+g1+geom_bar()+facet_wrap("address") #drinking distributions within R/U groups
+g1+geom_bar()+facet_wrap("high_use") #address proportions within F/T high drinkers
+table<-with(alc,table(high_use,address));table
+addmargins(prop.table(table,1))#address distribution within false/true group 
+addmargins(prop.table(table,2)) #drinking distribution within R/U group
+
+```
+
+
+#####Mother's job
+
+To end with colour, as a last graphical inspection, plotting alcohol status by mother's job. No remarkable differences between groups can be seen with respect to the student's alcohol consumption. Looking at the minor differences, I note that the data seems to contradict my original hypothesis: based on these plots the groups other and services contain the highest proportions of low consumers.
+
+```{r Mjob3, warning=FALSE,message=FALSE, fig.cap="*Figure 5:Bar plot of mother's job and alcohol consumption*", fig.width=10.5, fig.height=7.5, fig.show='hold'}
+
+#Mjob
+g1<-ggplot(data=alc, aes(x=high_use,fill=Mjob))
+g1+geom_bar()+facet_wrap("Mjob")
+
+```
+
+####Logistic regression
+
+Based on the summary of the logistic regression below, only sex and studytime are statistically significantly (p<0.05) associated with high alcohol consumption. Looking at the confidence intervals of the odds ratios related to those variables that are not statistically significant in the model, we note that 1 is included in the interval. Sex has an OR of 1.9 for men, meaning that men have twice as high of a risk for being a high consumer of alcohol compared to women. Studytime, the only other statistically significant explanatory variable, has an OR of 0.6, meaning that at every unit increase in studytime, the risk of being a high consumer is nearly halved from the previous studytime unit. 
+
+```{r log3, message=FALSE,warning=FALSE}
+#logistic regression
+m <- glm(high_use ~ sex + address + Mjob + studytime, data = alc, family = "binomial")
+summary(m)
+# compute odds ratios (OR)
+OR <- exp(coef(m))
+
+# compute confidence intervals (CI)
+CI<- exp(confint(m))
+
+# print out the odds ratios with their confidence intervals
+cbind(OR, CI)
+```
+
+####Predictive power of the finalized logistic regression model
+
+Next using, the variables that had a statistically significant relationship with alcohol consumption, I will explore the predictive power of my model. 
+
+```{r prediction3, message=FALSE,warning=FALSE}
+####
+#logistic regression
+m2 <- glm(high_use ~ sex + studytime, data = alc, family = "binomial")
+
+# predict() the probability of high_use
+alc$high_use_prob<- predict(m2, type = "response")
+
+# use the probabilities to make a prediction of high_use
+alc$high_use_pred <- alc$high_use_prob > 0.5
+
+# see the last ten original classes, predicted probabilities, and class predictions
+tail(alc[,c("high_use", "high_use_prob", "high_use_pred")])
+
+# tabulate the target variable versus the predictions
+table(high_use = alc$high_use, prediction = alc$high_use_pred)
+
+# seeing why we get so odd results
+summary(alc$high_use_prob)
+
+```
+
+Our model ends up categorizing all individuals as non-high consumers of alcohol. I will next do the same including absences in the model.
+
+
+```{r prediction2_3, message=FALSE,warning=FALSE}
+
+#####Including absences as during the DataCamp exercises we noticed this was a good predictor
+m3 <- glm(high_use ~ sex + studytime + absences , data = alc, family = "binomial")
+alc$high_use_prob<- predict(m3, type = "response")
+
+# use the probabilities to make a prediction of high_use
+alc$high_use_pred <- alc$high_use_prob > 0.5
+
+# see the last ten original classes, predicted probabilities, and class predictions
+tail(alc[,c("high_use", "high_use_prob", "high_use_pred")])
+
+# tabulate the target variable versus the predictions
+table(high_use = alc$high_use, prediction = alc$high_use_pred)
+
+# comparing to previous
+summary(alc$high_use_prob)
+
+# access dplyr and ggplot2
+library(dplyr); library(ggplot2)
+
+# initialize a plot of 'high_use' versus 'probability' in 'alc'
+g <- ggplot(alc, aes(x = high_use_prob, y = high_use, col=high_use_pred))
+
+# define the geom as points and draw the plot
+g + geom_point()
+
+# tabulate the target variable versus the predictions
+table(high_use = alc$high_use, prediction = alc$high_use_pred)
+
+# define a loss function (mean prediction error)
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+
+# call loss_func to compute the average number of wrong predictions in the (training) data
+loss_func(class = alc$high_use, prob = alc$high_use_pred) #proportion of wrongly predicted values.
+(10+88)/382 #We get the same anwer when calculating the off diagonal values from the previous table over all values.
+loss_func(class = alc$high_use, prob = 0) #comparing to simply guessing none are high users. This gives worse results than the model with absences!
+```
+
+
+Bsed on the model including absences we actually get a lot better predictions and do not systematically end putting everyone in to the FALSE category. This model ends up falsely classifying a quarter of the data, whereas our previous model (or a directly classifying all in to the FALSE category) would end up falsely classifying one third of the students. 
