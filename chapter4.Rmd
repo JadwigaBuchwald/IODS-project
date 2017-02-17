@@ -1,0 +1,277 @@
+# Chapter 4: Clustering and classification
+
+*Key words: k-means clustering, Euclidean distance, Manhattan distnace, standardizing, centering, scaling, linear discriminant analysis, preicting classes (training and test sets), within sum of squares*
+
+### Boston data set
+#### Introduction
+The Boston data set can be loaded from the `MASS` R-package. The data is described [here](https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/Boston.html). It contains infromation such as *per capita crime rate by town* and *pupil-teacher ratio by town* for the suburbs of Boston. The data frame has 506 rows (towns) and 14 columns (variables). All variables are numeric except for `rad`(=*index of accessibility to radial highways*) and `chas`(=*Charles River dummy variable: 1 if tract bounds river; 0 otherwise*) which are coded as integer variables by default. Based on summary statistics and histograms (lower) we note that all are continuous variables, except that `rad` is ordinal and `chas` a dummy variable.
+
+
+```{r analysis4, warning=FALSE,message=FALSE}
+library(dplyr) #enables usage of pipe i.e. %<%
+# access the MASS package
+library(MASS)
+
+
+# load the data
+data("Boston")
+
+# explore the dataset
+dim(Boston)
+str(Boston)
+
+```
+
+
+#### Variables
+Looking at the summary statistics we note that the variables are all on different scales, and that there are no missing values present and all values are positive. For the two integer variables I plotted the frequency tables, which show that the different categories within the variables are of very different sizes. Based on the pairwise plot matrix of the variables, we can see that only the variables `rm`, `nox`, `lstat` and `medv` seem somewhat normally distributed, whereas the others are highly skewed or bimodal (diagonal of the mtrix). We also note that there are some apparent linear (e.g. `nox` x `age`) as well as unlinear correlations(e.g. `nox` x `dis`) between the variables (lower triangle). Some variables don't seem to be correlated at all on the other hand (e.g. `nox` x `chas`) (cor=0.09). 
+
+
+```{r variables4, warning=FALSE,message=FALSE,fig.cap="*Figure 1:Pairwise plot of all variables*", fig.width=10.5, fig.height=7.5}
+
+# explore the dataset further
+summary(Boston)
+table(Boston$chas); table(Boston$rad) #tables for the integer variables
+
+# accessig the GGally and ggplot2 libraries
+library(GGally)
+library(ggplot2)
+
+# Drawing pairwise plots of all columnswith ggpairs(), by sex
+p <- ggpairs(Boston, lower = list(combo = wrap("facethist", bins = 20))) +
+  ggtitle("All variables against each other") +
+  theme(plot.title = element_text(hjust = 0.5,size=20,face='bold'))
+p
+
+
+```
+
+Since not all variables seemed to have a linear correlation, let's calculate the spearman rank correlations and take a closer look at the correlations. We notice that the correlations are stronger, e.g. for nox x age it is now -0.88, whereas the corresponding pearson correlation was -0.731.
+
+```{r correlations4, warning=FALSE,message=FALSE,fig.cap="*Figure 2:Spearman's rank correlations", fig.width=10.5, fig.height=7.5}
+#Drawing the correlation matrix
+#install.packages("corrplot")
+library(corrplot)
+cor_matrix<-cor(Boston,method="spearman") #spearman as variables not assumed to always have linear associations
+corrplot(cor_matrix, method="circle",type="upper",tl.cex = 1.2,diag=F,title="Spearman's rank correlations") #my fave options
+corrplot(cor_matrix, method="circle",type="upper",tl.cex = 1.2, diag=F, add=TRUE,addCoef.col="black",title="Spearman's rank correlations") #adding values to plot
+
+```
+
+### Data preparation for cluster analysis
+
+#### Scaling
+
+In cluster analysis we are interested in the distances between observations as we want to see which observations are closer to each other than the others. In order to calculate comparable distances, we need to ensure all variables are on the same scale. Hence, I scaled all the variables after which they all had a mean of zero and a standard deviation of one (see below, second summary table). Nevertheless, looking at the minimum, maximum and quartiles, it is indisputable that the variables are still very skewed (the two summary outputs below), infact their distribution plots are exactly the same as well as their pairwise correlations which can be seen from Figure 3: only the scale of the variable changes. Linear discriminant analysis, which we will soon use, actually assumes all variables to be normally distributed. So if we were to do the analysis properly we could for example rank transform the variables to normality, but we will not do this now as we will stick to the instructions of the exercise.
+
+```{r scaling4, warning=FALSE,message=FALSE,fig.cap="*Figure 3:Pairwise plot of all scaled variables*", fig.width=10.5, fig.height=7.5}
+# center and standardize variables
+boston_scaled <- scale(Boston)
+
+# summaries of the scaled variables
+summary(boston_scaled) #quartiles and mean
+
+# class of the boston_scaled object 
+class(boston_scaled)
+
+# change the object to data frame
+boston_scaled<-as.data.frame(boston_scaled)
+
+library(pastecs)
+round(stat.desc(boston_scaled),3)[c(1,4,5,8,9,13),] #printing N, min, max, med, mean, sd
+
+# accessig the GGally and ggplot2 libraries
+library(GGally)
+library(ggplot2)
+p <- ggpairs(boston_scaled, lower = list(combo = wrap("facethist", bins = 20))) +
+  ggtitle("All scaled variables against each other") +
+  theme(plot.title = element_text(hjust = 0.5,size=20,face='bold'))
+p
+
+```
+
+####Creating the categorical crime variable
+
+We create a categorical variable of the crime rate by using the quantiles of the scaled crime as the break points in the categorical variable. I then drop the old crime rate variable from the dataset and replace it with the new categorical one.
+
+```{r crime4, warning=FALSE,message=FALSE}
+
+# save the scaled crim as scaled_crim
+scaled_crim <- boston_scaled$crim
+
+# summary of the scaled_crim
+summary(scaled_crim)
+
+# create a quantile vector of crim and print it
+bins <- quantile(scaled_crim)
+bins
+
+# create a categorical variable 'crime'
+crime <- cut(scaled_crim, breaks = bins, include.lowest = TRUE,label=c("low","med_low","med_high","high"))
+
+# look at the table of the new factor crime
+table(crime)
+
+# remove original crim from the dataset
+names(boston_scaled)
+a<-which(names(boston_scaled)=="crim")
+boston_scaled<-boston_scaled[,-a]
+names(boston_scaled)
+
+# add the new categorical value to scaled data
+boston_scaled$crime <- crime
+names(boston_scaled)
+
+
+```
+####Dividing the data in to train and test sets
+
+I divided the data into train and test sets, so that 80% belong to the train set.
+
+```{r division4, warning=FALSE,message=FALSE}
+set.seed(123) #setting seed to be able to acquire the exact same training and test sets later
+# number of rows in the Boston dataset 
+n <- nrow(boston_scaled)
+n
+
+# choose randomly 80% of the rows
+ind <- sample(n,  size = n * 0.8)
+
+# create train set
+train <- boston_scaled[ind,]
+
+# create test set 
+test <- boston_scaled[-ind,]
+
+```
+
+### Linear discriminant analysis (LDA)
+####Fitting LDA fot the categorical crime variable using the train set
+We employ linear discriminant analysis on the training set so that we use the categorical crime variable as the target variable and all the other 13 variables as the predictor variables. Based on the LDA-biplot the variables `zn`, `rad` and `nox` would seem to be the most important determinants when predicting in to which crime groups the observations fall.  
+
+```{r LDAtrain4, warning=FALSE,message=FALSE,fig.cap="*Figure 4:LDA biplot for training set*", fig.width=10.5, fig.height=7.5}
+# linear discriminant analysis
+lda.fit <- lda(crime~., data = train)
+
+# print the lda.fit object
+lda.fit
+
+# the function for lda biplot arrows
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+# target classes as numeric
+str(train$crime)
+classes <- as.numeric(train$crime)
+str(classes)
+
+# plot the lda results
+plot(lda.fit, dimen = 2,col=classes, pch=classes)
+lda.arrows(lda.fit, myscale = 2) #myscale determines the length og the arrows 
+
+
+
+```
+
+####Prediction in test set and performance assessment 
+With the test set (20% of the original data) we test how well the fitted LDA model we created using the training set (80% of the data) performs. We note that the mean prection error is just below 30%.  
+
+```{r LDAtest4, warning=FALSE,message=FALSE}
+# save the correct classes from test data
+correct_classes <- test$crime
+
+# remove the crime variable from test data
+test <- dplyr::select(test, -crime)
+
+# lda.fit, correct_classes and test are available
+
+# predict classes with test data
+lda.pred <- predict(lda.fit, newdata = test)
+
+# cross tabulate the results
+t<-table(correct = correct_classes, predicted = lda.pred$class);t
+
+#To calculate the predictive power we calculate the mean prediction error which means the proportion wrongly classifyed values:
+(sum(t)-sum(diag(t)))/sum(t)
+
+```
+
+###K-means clustering
+K-means clustering is the oldest most commonly used clustering method as it often finds a solution as is easy to use. Nevertheless, it isn't very robust: any changes in the dataset may result in different solutions. 
+
+####Distances between observations
+We calculate the euclidian and manhattan distances between the observations. We note that their ranges are very different. 
+
+```{r kmeans4, warning=FALSE,message=FALSE}
+
+set.seed(123)
+
+# euclidean distance matrix
+Boston_scaled<-scale(Boston)
+dist_eu <- dist(Boston_scaled)
+summary(dist_eu)
+
+# manhattan distance matrix
+dist_man <- dist(Boston_scaled,method="manhattan")
+summary(dist_man)
+
+```
+
+We continue with the commonly used euclidian distances to complete k-means clustering. First starting off with four clusters we note from the pairwise scatterplot which is coloured based on cluster, that the green and red clusters are perhaps the most important clusters regarding the majority of the variables. 
+
+####Optimal number of clusters via K-means clustering
+```{r kmeansclusters4, warning=FALSE,message=FALSE}
+
+# k-means clustering
+km4 <-kmeans(dist_eu, centers = 4)
+summary(km4)
+
+# plot the Boston dataset with clusters
+pairs(Boston_scaled, col = km4$cluster)
+
+# determine the number of clusters
+k_max <- 20
+
+# calculate the total within sum of squares
+twcss <- sapply(1:k_max, function(k){kmeans(dist_eu, k)$tot.withinss})
+
+# visualize the results
+plot(1:k_max, twcss, type='b') #shows that 2 is the optimal amount of clusters
+
+# k-means clustering
+km9 <-kmeans(dist_eu, centers = 9) 
+
+# plot the Boston dataset with clusters
+pairs(Boston_scaled, col = km9$cluster)
+
+
+```
+
+To assess the optimal amount of clusters, i calculated the total within sum of squares for the k-means results from 1 to 10 clusters. The total within sum of squares is the total of all the within cluster sum of squares (WCSS), which is calculated as follows:
+$WCSS=\sum_{i=1}^N (x_i=c)^2$, where $c$ is the centroid of the $i$th cluster.
+
+Plotting these, we note that four to nine clusters would suffice. There is no clear cutoff this time, so it is highly subjective and would depend on the aims of the study and the background theory. I chose nine clusters, as after that based on the twcss x nclusters plot, it is clear that there is no gain of adding more clusters, in other words (nearly) no more of the variance of the observations is explained by additional clusters (the total distance of the observations from the centroids of the clusters is not reduced by the addition of more clusters). Also, as I had already ran the 4 clusters solution I thought this would provide an interesting comparison. Thus, I reran the k-means clustering and based on the pairwise plot we can see that the differently coloured clusters seem to be seperating the observations quite nicely.
+
+
+```{r kmeansclusters9solution4, warning=FALSE,message=FALSE}
+table(km4$cluster)
+table(km9$cluster)
+
+data<-cbind(km9$cluster,km4$cluster)
+data<-as.data.frame(data)
+names(data)<-c("clusters_9","clusters_4")
+
+str(data)
+g1<-ggplot(data=data, aes(x=clusters_9,fill=clusters_4))
+g1+geom_bar()+facet_wrap("clusters_4")
+
+```
+
+I tabulated the `km$cluster` variable in each case to see how the observations fell into the different clusters when we had 4 clusters versus when we had 9. When we have nine clusters there is one cluster into which only five observations belong. Based on the barplot matrix the original four clusters are evenly divided into further clusters when we cluster the observations into nine. 
+

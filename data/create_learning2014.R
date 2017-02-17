@@ -92,6 +92,7 @@ p4
 ###Drawing pairwise plots of all columns
 
 # access the GGally and ggplot2 libraries
+install.packages("GGally")
 library(GGally)
 library(ggplot2)
 
@@ -113,6 +114,12 @@ plot(my_model2, which=c(1,2,5))
 ###Predicting values:
 # Create model object m
 m <- lm(points ~ attitude, data = learning2014)
+
+# print out a summary of the model
+summary(m)
+
+m <- lm(points ~ attitude, data = learning2014)  #excluding the non stat sig. variables from the model
+plot(m,)
 
 # print out a summary of the model
 summary(m)

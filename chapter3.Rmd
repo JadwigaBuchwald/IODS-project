@@ -110,7 +110,7 @@ g1+geom_bar()+facet_wrap("Mjob")
 
 ####Logistic regression
 
-Based on the summary of the logistic regression below, only sex and studytime are statistically significantly (p<0.05) associated with high alcohol consumption. Looking at the confidence intervals of the odds ratios related to those variables that are not statistically significant in the model, we note that 1 is included in the interval. Sex has an OR of 1.9 for men, meaning that men have twice as high of a risk for being a high consumer of alcohol compared to women. Studytime, the only other statistically significant explanatory variable, has an OR of 0.6, meaning that at every unit increase in studytime, the risk of being a high consumer is nearly halved from the previous studytime unit. 
+Based on the summary of the logistic regression below, only sex and studytime are statistically significantly (p<0.05) associated with high alcohol consumption. Looking at the confidence intervals of the odds ratios related to those variables that are not statistically significant in the model, we note that 1 is included in the interval. Sex has an OR of 1.9 for men, meaning that men have twice as high odds of being a high consumer of alcohol compared to women. Studytime, the only other statistically significant explanatory variable, has an OR of 0.6, meaning that at every unit increase in studytime, the odds of being a high consumer is nearly halved from the previous studytime unit. 
 
 ```{r log3, message=FALSE,warning=FALSE}
 #logistic regression
