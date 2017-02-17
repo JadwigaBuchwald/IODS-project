@@ -255,10 +255,10 @@ pairs(Boston_scaled, col = km9$cluster)
 
 ```
 
-To assess the optimal amount of clusters, i calculated the total within sum of squares for the k-means results from 1 to 10 clusters. The total within sum of squares is the total of all the within cluster sum of squares (WCSS), which is calculated as follows:
+To assess the optimal amount of clusters, i calculated the total within sum of squares for the k-means results from 1 to 20 clusters. The total within sum of squares is the total of all the within cluster sum of squares (WCSS), which is calculated as follows:
 $WCSS=\sum_{i=1}^N (x_i=c)^2$, where $c$ is the centroid of the $i$th cluster.
 
-Plotting these, we note that four to nine clusters would suffice. There is no clear cutoff this time, so it is highly subjective and would depend on the aims of the study and the background theory. I chose nine clusters, as after that based on the twcss x nclusters plot, it is clear that there is no gain of adding more clusters, in other words (nearly) no more of the variance of the observations is explained by additional clusters (the total distance of the observations from the centroids of the clusters is not reduced by the addition of more clusters). Also, as I had already ran the 4 clusters solution I thought this would provide an interesting comparison. Thus, I reran the k-means clustering and based on the pairwise plot we can see that the differently coloured clusters seem to be seperating the observations quite nicely.
+Plotting these, we note that four to nine clusters would suffice (*annoyingly, I had forgot to put a seed so the situation looks different now*). There is no clear cutoff this time, so it is highly subjective and would depend on the aims of the study and the background theory. I chose nine clusters, as after that based on the twcss x nclusters plot, it is clear that there is no gain of adding more clusters, in other words (nearly) no more of the variance of the observations is explained by additional clusters (the total distance of the observations from the centroids of the clusters is not reduced by the addition of more clusters). Also, as I had already ran the 4 clusters solution I thought this would provide an interesting comparison. Thus, I reran the k-means clustering and based on the pairwise plot we can see that the differently coloured clusters seem to be seperating the observations quite nicely.
 
 
 ```{r kmeansclusters9solution4, warning=FALSE,message=FALSE}
