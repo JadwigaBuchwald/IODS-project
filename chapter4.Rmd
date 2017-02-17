@@ -223,9 +223,11 @@ summary(dist_man)
 
 ```
 
-We continue with the commonly used euclidian distances to complete k-means clustering. First starting off with four clusters we note from the pairwise scatterplot which is coloured based on cluster, that the green and red clusters are perhaps the most important clusters regarding the majority of the variables. 
 
 ####Optimal number of clusters via K-means clustering
+
+We continue with the commonly used euclidian distances to complete k-means clustering. First starting off with four clusters we note from the pairwise scatterplot which is coloured based on cluster, that the green and red clusters are perhaps the most important clusters regarding the majority of the variables. 
+
 ```{r kmeansclusters4, warning=FALSE,message=FALSE}
 
 # k-means clustering

@@ -938,10 +938,10 @@ dist_man &lt;- dist(Boston_scaled,method=&quot;manhattan&quot;)
 summary(dist_man)</code></pre>
 <pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##  0.2662  8.4830 12.6100 13.5500 17.7600 48.8600</code></pre>
-<p>We continue with the commonly used euclidian distances to complete k-means clustering. First starting off with four clusters we note from the pairwise scatterplot which is coloured based on cluster, that the green and red clusters are perhaps the most important clusters regarding the majority of the variables.</p>
 </div>
 <div id="optimal-number-of-clusters-via-k-means-clustering" class="section level4">
 <h4>Optimal number of clusters via K-means clustering</h4>
+<p>We continue with the commonly used euclidian distances to complete k-means clustering. First starting off with four clusters we note from the pairwise scatterplot which is coloured based on cluster, that the green and red clusters are perhaps the most important clusters regarding the majority of the variables.</p>
 <pre class="r"><code># k-means clustering
 km4 &lt;-kmeans(dist_eu, centers = 4)
 summary(km4)</code></pre>
