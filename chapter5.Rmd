@@ -1,0 +1,180 @@
+# Chapter 5: Dimentionality reduction techniques
+
+*Key words: principal component analysis (PCA), multiple correspondance analysis (MCA), biplots*
+
+### Human data set
+#### Introduction
+I have created the `human` data set from two openly available data sets which originate from the [United Nations Development Programme](http://hdr.undp.org/en/content/human-development-index-hdi). My scripts for the creation of the data can be found [here](https://github.com/JadwigaBuchwald/IODS-project/blob/master/data/create_human.R). An overview of the indices the data contain can be found [here](http://hdr.undp.org/sites/default/files/hdr2015_technical_notes.pdf).
+
+Let's take a closer look at the data I have created.
+
+```{r human5, warning=FALSE,message=FALSE}
+library(dplyr) #enables usage of pipe i.e. %<%
+
+#reading in the data and exploring it 
+setwd("C:/HY-Data/JADWIGAB/PhD_FIMM/NotesOutsideTheOffice/Courses/OpenData2017/For_IODS/IODS-project/data")
+human<-read.table("./human.txt",sep="\t", header=T, dec=".",stringsAsFactors = FALSE)
+dim(human) #155 x 8
+names(human)
+head(human)
+str(human) 
+
+```
+
+All in all the data contains 155 observations (countries) and 8 (numeric or integer) variables as all rows with missing values have been deleted and only the following variables have been included: 
+
+1. *Sec.Edu.FMRatio* = Ratio of the proportion of females (>=25 years old) with at least secondary education to that of males  
+2. *LabourForce.FMRatio* = Ratio of the proportion of females (>=15 years old) in the labour force to that of males  
+3. *Eduyears.Exp* = Expected years of schooling 
+4. *Life.Exp* = Life expectancy at birth 
+5. *GNI* = Gross National Income per capita 
+6. *Mat.Mort.Ratio* = Maternal mortality ratio (deaths per100,000 live births)
+7. *Adol.Birth.Rate* = Adolescent birth rate (births per 1,000 women ages 15-19)
+8. *Parl.F.Prcnt* = Percentage of female representatives in the parliament 
+
+#### Variables
+Looking at the summary statistics below we note that the variables are all on different scales, there are no missing values present and all values are positive. Based on the pairwise plot matrix of the variables (*Figure 1*), we can see that only the variables `Eduyears.Exp` and `Parl.F.Prcnt` seem somewhat normally distributed. The others are clearly skewed and all variabes would seem to have at least two distict categories with their own distributions as we can just about see one bigger normal distribution and one smaller for all variables. Perhaps the countries could be divided into developing and developed countries and the within group distributions would be more normal. This could be something worthwhile looking into but we will not do this now. Another important point to take note of is that not all correlations seem to be linear. For example Life expectancy and GNI would seem to have an exponential association.  
+
+```{r variables5, warning=FALSE,message=FALSE,fig.cap="*Figure 1:Pairwise plot of all variables*", fig.width=10.5, fig.height=7.5}
+
+# explore the dataset further
+summary(human)
+
+# accessig the GGally and ggplot2 libraries
+library(GGally)
+library(ggplot2)
+
+# Drawing pairwise plots of all columnswith ggpairs(), by country
+p <- ggpairs(human) +
+  ggtitle("All variables against each other") +
+  theme(plot.title = element_text(hjust = 0.5,size=20,face='bold'))
+p
+
+
+```
+
+
+### Principal component analyss
+
+Principal component analysis is a commonly used method for dimention reduction of data. All derived principal components (PC) are uncorrelated from each other and each PC captures less variance of the data than the previous PC. 
+
+#### Before standardization
+
+Let's see what kind of results we get when we perform principal component analysis on our data before we standardize the variables. In general this is not a good idea as PCA is sensitive to the relative scaling of the original variables and assumes that variables with larger variance are more important than those with a smaller variance. We will do this as a exercise to see how the results change when we later perform PCA on standardized variables.
+
+```{r PCunscaled5, warning=FALSE,message=FALSE,fig.cap="*Figure 2: Biplot of the two first principal components obtained before standardizing the variables. The first PC explains all of the total variance in the 8 original variables and is characterized by the variable GNI alone.*", fig.width=10.5, fig.height=7.5}
+# perform principal component analysis (with the SVD method)
+pca_human <- prcomp(human)
+# create and print out a summary of pca_human
+s <- summary(pca_human)
+s
+pca_pr <- round(100*s$importance[2, ], digits = 1)
+pca_pr
+# create object pc_lab to be used as axis labels
+pc_lab<-paste0(names(pca_pr), " (", pca_pr, "%)")
+
+# drawing a biplot of the PCA representation of the original variables
+biplot(pca_human, cex = c(0.8, 1), col = c("grey40", "deeppink2"), xlab = pc_lab[1], ylab = pc_lab[2])
+
+library(pastecs)
+round(stat.desc(human),3)[c(1,4,5,8,9,13),] #printing N, min, max, med, mean, sd, as the above solutions suggests GNI has a lot bigger sd^2 than the rest of the variables-->indeed it does.
+
+```
+
+We end up obtaining one PC which explains pretty much all (that is, after rounding 100%) of the variance of the 8 variables in the data. Looking at the biplot we see that the variable GNI is most influencial and ends up defining PC1 while no other variable seems to matter. This variable has the gratest range and variance of all the variables. Thus it ends up getting too much weight in the analysis and the results can not be trusted as the importance of the variables using this method are not comparable without scaling. We will next redo the PCA after first scaling the variables.
+
+####After standardization
+
+Let's begin by scaling the variables.
+
+```{r scaling5, warning=FALSE,message=FALSE,fig.cap="*Figure 3:Pairwise plot of all scaled variables*", fig.width=10.5, fig.height=7.5}
+# center and standardize variables
+human_std<- scale(human)
+
+# summaries of the scaled variables
+summary(human_std) #quartiles and mean
+
+# class of the boston_scaled object 
+class(human_std)
+human_std<-as.data.frame(human_std)
+# 
+library(pastecs)
+round(stat.desc(human_std),3)[c(1,4,5,8,9,13),] #printing N, min, max, med, mean, sd
+# 
+
+p <- ggpairs(human_std)+ ggtitle("All scaled variables against each other") +
+   theme(plot.title = element_text(hjust = 0.5,size=20,face='bold'))
+p
+
+```
+
+Now, all variables have a mean of 0 and standard deviation of 1. The distributions are still of the same shape though as before (e.g. diagonal of the pairwise plots before and after scaling) and are still not normal (e.g. median is not equel to mean after scaling either). The relationships between the variables can also be seen to have remained identical. Only thing that has changes is the range: the minima and maxima and the meand and variance (sd^2). 
+
+Let's employ PCA on the scaled data.
+
+```{r pca_std, warning=FALSE,message=FALSE,fig.cap="*Figure 4:Biplot of the two first principal components obtained after standardizing the variables. The first PC explains over half of the total variance in the 8 original variables, and depicts the health care and educational aspects, while the second PC explains less than one fifth of the total variance and depicts the political gender equality*  ", fig.width=10.5, fig.height=7.5}
+
+# perform principal component analysis (with the SVD method)
+pca_human_std <- prcomp(human_std)
+# create and print out a summary of pca_human
+s <- summary(pca_human_std)
+s
+pca_pr_std <- round(100*s$importance[2, ], digits = 1)
+pca_pr_std
+# create object pc_lab to be used as axis labels
+pc_lab<-paste0(names(pca_pr_std), " (", pca_pr_std, "%)")
+
+# drawing a biplot of the PCA representation of the original variables
+biplot(pca_human_std, cex = c(0.8, 1), col = c("grey40", "deeppink2"), xlab = pc_lab[1], ylab = pc_lab[2])
+
+
+```
+
+Now, based on the summary of the PCA and the biplot of the first two PCs we seem to have obtained more sensible results. The first PC explains over half of the total variance of the 8 variables, and together with the second one it explains around 70%.   
+
+####Interpreting the biplot obtained after tandardization
+
+The biplot shows that the variables `LabourFrce.FMRatio` and `Prl.F.Prcnt` load on to the PC2 while all the rest contribute mainly to PC1. Therefore, PC1 would seem to depict health care and educational aspects while the second PC gender equality in the political system. Countries that fall in the top left quarter of the plot are the ones that get the desired scores on these dimensions, whereas those in the right bottom are the ones that get the scores least respected. The two PCs are uncorrelated while the variables within a PC are highly correlated (either positively or negatively).  
+
+### Tea data set
+####Exploring the data
+The `tea`data can be found in the `FactoMineR` R-package. It contains 300 observations and 36 variables, all of which are categorical except for age which is continuous. I excluded the age variable as the data set also included a categorical age variable. Most of the categorical variables only have two categories. Based on the barplots all of the categories have quite a good representation except for Not. home within the home variable. 
+
+```{r tea5, warning=FALSE,message=FALSE,fig.cap="*Figure 5:LDA biplot for training set*", fig.width=10.5, fig.height=15}
+#install.packages("FactoMineR")
+library(FactoMineR) #conatins the data set tea
+data(tea) #loading the data tea
+library(ggplot2)
+#install.packages("tidyr")
+library(tidyr)
+
+# look at the summaries and structure of the data
+summary(tea)
+str(tea)
+
+tea<-dplyr::select(tea,-age)
+
+#we take age away as age_Q will suffice
+gather(tea) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") +geom_bar() +theme(axis.text.x=element_text(angle=45,hjust=1,size=8))
+
+```
+
+####Multiple Correspondance Analysis
+Multiple Correspondance analysis is a suitable dimention reduction technique when we have categorical variables, which is the case with the tea data. Below we note that the first dimention only explains 6% of the variance in the data. When we draw the biplot, as there are so many variables and categories within the plot becomes quite messy. Once we only draw labels for the 20 categories that contribute most on the two dimensions displayed the plot becomes more readable. The categories are from multiple variables showing that not only a few variables are very important but that many variables have atleast some categories that are very influencial.
+
+```{r mca5,warning=FALSE,message=FALSE}
+
+# multiple correspondence analysis
+mca <- MCA(tea, graph = FALSE)
+
+# summary of the model
+summary(mca)
+
+# visualize MCA
+plot(mca, invisible=c("ind"),habillage="quali")
+
+#Only plotting labels for the 20 categories that contribute most 
+plot(mca, invisible=c("ind"),habillage="quali", selectMod="contrib 20")
+
+```
+
