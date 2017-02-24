@@ -140,7 +140,7 @@ The biplot shows that the variables `LabourFrce.FMRatio` and `Prl.F.Prcnt` load 
 ####Exploring the data
 The `tea`data can be found in the `FactoMineR` R-package. It contains 300 observations and 36 variables, all of which are categorical except for age which is continuous. I excluded the age variable as the data set also included a categorical age variable. Most of the categorical variables only have two categories. Based on the barplots all of the categories have quite a good representation except for Not. home within the home variable. 
 
-```{r tea5, warning=FALSE,message=FALSE,fig.cap="*Figure 5:LDA biplot for training set*", fig.width=10.5, fig.height=15}
+```{r tea5, warning=FALSE,message=FALSE,fig.cap="*Figure 5:Barplots of tea variables*", fig.width=10.5, fig.height=15}
 #install.packages("FactoMineR")
 library(FactoMineR) #conatins the data set tea
 data(tea) #loading the data tea
